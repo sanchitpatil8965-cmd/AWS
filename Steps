@@ -1,0 +1,221 @@
+Q2 Demonstrate your application to deploy on S3 / SEBS using AWS CodePipeline
+		Step 1: Create and Configure the S3 Bucket 
+		1.	Navigate to the S3 service in the AWS Console. 
+		2.	Click Create bucket. 
+		3.	Give it a globally unique name (e.g., my-codepipeline-demo-siteuniquename). 
+			Uncheck "Block all public access". Acknowledge the warning. This is necessary to make your website public. 
+		1.	Click create bucket. 
+		2.	Go into your new bucket, click the Properties tab. 
+		1.	Scroll down to Static website hosting and click Edit. 
+		2.	Enable it, set the Index document to index.html, and save changes. 
+		3.	Go to the Permissions tab, click Edit under Bucket policy, and paste the following policy. Replace YOUR_BUCKET_NAME with your bucket's name. 
+		Step 2: Create the AWS CodePipeline 
+		1.	Navigate to the CodePipeline service in the AWS Console. 
+		2.	Click Create pipeline. 
+		Step 3: Pipeline settings: 
+		○	Pipeline name: My-S3-Website-Pipeline. 
+		○   Leave Service role as is; CodePipeline will create a new one for you. ○   Click Next. 
+		Step 4: Source stage: 
+		一	Source provider: Select GitHub (via GitHub App ). 
+		○ Click Create a connection. A new window will open. Name your connection (e.g., my-github-connection) and connect to your GitHub account. 
+		Step 4: Build stage: 
+		o	Build provider: Select AWS CodeBuild. 
+		○ Click Create project. A new window will appear. 
+		Environment image: Managed image. 
+		■ Operating system: Amazon Linux 2. 
+		■ Runtime(s): Standard. 
+		■ Image: aws/codebuild/amazonlinux2-x86_64standard:5.0. 
+		■ Buildspec: Check "Use a buildspec file". CodeBuild will automatically look for buildspec.yml in your repo's root
+		o	Click Continue 	to CodePipeline.
+		o	Click Next. 
+		Step 5: Deploy stage: 
+		Deploy provider: Select Amazon S3.
+		Region: Your current region.
+		Bucket: Select the S3 bucket you created earlier. 
+		○ Check the box for "Extract file before deploy". This unzips the build artifact and places the files directly in the bucket. 
+		Step 6: Review all the settings and click Create pipeline
+		The pipeline will automatically start its first run. You can watch it progress through the stages. Once it succeeds, go to your S3 bucket's static website URL (from Properties -> Static website hosting) to see your live page! 
+
+Q3Deploy sample application on EC2 instance using AWS CodeDeploy.
+		Step 1: Create an IAM Role (i)
+		The EC2 instance needs permission to communicate with the CodeDeploy service.
+		1.	Navigate to the IAM service.
+		2.	Go to Roles and click Create role.
+		3.	Trusted entity type: Select AWS service.
+		4.	Use case: Select EC2. Click Next.
+		5.	Search for and add the permission policy:
+		AmazonEC2RoleforAWSCodeDeploy. Click Next
+		Step 2: Create an IAM Role (ii)
+		The EC2 instance needs permission to communicate with the CodeDeploy service.
+		6.	Navigate to the IAM service.
+		7.	Go to Roles and click Create role.
+		8.	Trusted entity type: Select AWS service.
+		9.	Use case: Select CodeDeploy. Click Next		
+		Step 3: Launch and Prepare the EC2 Instance
+		1.	Navigate to the EC2 service and click Launch instances.
+		2.	Name: My-CodeDeploy-Server.
+		3.	AMI: Select Amazon Linux 2 AMI (HVM) - Free tier eligible.
+		4.	Instance type: t2.micro (Free tier eligible).
+		5.	Key pair: Create or select an existing key pair to be able to SSH into the instance if needed.
+		6.	Network settings:In the Security group, ensure "Allow HTTP traffic from the internet" is checked. This opens port 80 so you can view the website.
+		7.	Advanced details:Expand this	section and	for	IAM instance	profile,	select	the EC2CodeDeploy-Role you just created.
+		8.	Click Launch instance.
+		9.	Once the instance is running, select it and click Connect. Use the EC2 Instance Connect or your SSH client to connect to it.
+		10.	In the instance's terminal, install the CodeDeploy agent:#!/bin/bash sudo	yum update -y sudo yum	install ruby-y	sudo yum	install wget -y		cd/home/ec2- user
+		wget	https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install chmod +x ./install sudo ./install auto
+		sudo service codedeploy-agent status (Make sure the codedeploy-agent is running). The URL is for the us-east-1 region; adjust it if you are in a different region.
+		Step 4: Create the CodeDeploy Application Navigate to the CodeDeploy service.
+		1.	On the left menu, select Applications and click Create application.
+		2.	Application name: My-Demo-Application.
+		3.	Compute platform: Select EC2/On-premises.
+		4.	Click Create application.
+		Step 5: Create a Deployment Group 
+		1.	Inside your new application, click Create deployment group.
+		2.	Deployment group name: My-EC2-Deployment-Group.
+		3.	Service Role: Click Create a new service role or select an existing one with the AWSCodeDeployRole policy. This role gives CodeDeploy permission to interact with your EC2 instances.
+		5.	Environment configuration:○	Check Amazon EC2 instances.
+		○	In the Key field, select Name. In the Value field, enter the name you gave your EC2 instance: My-CodeDeploy-Server. This tells CodeDeploy which instances to target
+		6.	Deployment settings: Choose CodeDeployDefault.AllAtOnce.
+		7.	Load Balancer: Uncheck "Enable load balancing".
+		Step 6: Create the Full Pipeline for EC2
+		Now we'll create a new pipeline that includes the CodeDeploy stage.
+		1.	Go back to CodePipeline and click Create pipeline.
+		2.	Pipeline name: My-EC2-App-Pipeline.
+		3.	Source Stage: Configure it exactly as before, connecting to your GitHub repository.
+		4.	Build Stage: Configure it exactly as before, selecting the same AWS CodeBuild project (my-s3-build-project). The build artifact works for both S3 and CodeDeploy.
+		1.	Deploy Stage: This is where it changes.
+		○	Deploy provider: Select AWS CodeDeploy.
+		○	Application name: Select My-Demo-Application from the dropdown.
+		○	Deployment group: Select My-EC2-Deployment-Group from the dropdown
+		2.	Review and click Create pipeline
+		The pipeline will run. The Deploy stage will now use CodeDeploy to copy the files to /var/www/html/ on your EC2 instance and run the scripts in your appspec.yml file to start the Apache server.
+		To verify, get the Public IPv4 address from your EC2 instance's details page and paste it into your browser. You should see your sample web page!
+
+
+Q4)Install Terraform on Windows machine. Build, apply and destroy AWS EC2 using Terraform.
+		1.Check that no instance is running on EC2
+		2.go to iam,go to user,create user,names user,attatch policy,click on administrator access and then create user
+		3.go to created user,create access key and then click on CLI,copy access and secret key.
+		4.go to vs code and create file.tf and enter code in it
+		5.make a file using "".tf"
+				code:
+				provider "aws" {
+					access_key= ""
+					secret_key= ""
+              region="us-east-1"
+        }
+        resource "aws_instance" "terra_XIE" {
+          ami = "" //EC2-launch instance-scrolldown-select ubuntu//
+          instance_type"t3.micro"
+        }
+
+    save this code and then open a new terminal
+    command:terraform innit
+    terraform plan
+    terrraform apply
+    terraform destroy
+
+
+Q8)Create AWS Lambda function to log “an object has been added” on adding the object to s3 bucket.
+		This code is of 8th :
+		exports.handler = async (event) => {
+  	console.log("An object has been added");
+  	if (event.Records && Array.isArray(event.Records)) {
+   	 event.Records.forEach((record) => {
+      const bucketName = record.s3.manas1211;
+      const objectKey = record.s3.object.key;
+      console.log(`Bucket name: ${bucketName}, Key: ${objectKey}`);
+    });
+  	} else {
+    	console.log("No S3 records found in the event.");
+  	}
+ 		 return {
+    statusCode: 200,
+    body: JSON.stringify('Hello from Lambda!'),
+  	};
+		};
+
+Q10)key pair-.ppk 1. connect to the created instance 2. display present working directory
+		EC2-Instance-name it-OS-ubunt-t2.micro-key pair-.ppk-create-connect-connect-terminal-pwd
+    		commands-
+        sudo apt update -y
+        sudo apt upgrade -y
+        sudo apt install docker.io -y
+        sudo systemctl enable docker
+        sudo systemctl start docker
+        sudo systemctl status docker
+        docker version
+        pwd
+        sudo su(not confirm if it switches to super user)
+
+
+Q8)Create AWS Lambda function to log “I got output”.
+Step 1: Create an IAM Role with Required Policies
+1. Go to the IAM service in the AWS Management Console.
+2. Click on Roles → Create role.
+3. In the “Select trusted entity” screen, choose AWS service and select Lambda as the use case. Click Next.
+4. On the “Add permissions” page, select the following three managed policies:
+o S3
+o CloudWatch
+o AWSLambdaBasicExecutionRole
+5. To add a custom inline policy for S3:
+o Go to the newly created role → Add permissions → Create inline policy.
+o Choose Service: S3.
+o Switch to the JSON tab and configure the action "s3:Put".
+o Save the policy.
+6. Give the role a descriptive name and click Create role.
+Step 2: Create an Empty S3 Bucket
+1. In the AWS Management Console, go to Services → S3.
+2. Click Create bucket.
+3. Enter a unique Bucket name.
+4. Enable Bucket Versioning.
+5. Click Create bucket.
+Step 3: Create a Lambda Function
+1. Go to AWS Lambda in the console.
+2. Click Create function.
+3. Choose Author from scratch, give a function name, select Python 3.9 as the runtime, and choose the IAM role you created earlier.
+4. Click Create function.
+5. Open the function, go to the Code section, and write the code:
+import json
+import boto3
+ 
+s3 = boto3.client('s3')
+ 
+def lambda_handler(event, context):
+   bucket = "name"
+   dataToUpload = {}
+   dataToUpload['Sid'] =
+   dataToUpload['Class'] =
+   dataToUpload['Dept'] =
+   dataToUpload['Name'] =
+   dataToUpload['File'] =
+   fileName =
+   uploadByteStream = bytes(json.dumps(dataToUpload).encode('UTF-8'))
+   s3.put_object(Bucket=bucket, Key=fileName, Body=uploadByteStream)
+   print('object has been uploaded')
+6. Click Save, then Deploy.
+7. Click Test to execute the function.
+8. If needed, go to IAM → Role → Add permissions.
+Step 4: Observe Logs in CloudWatch
+1. Go to CloudWatch → Logs → Log Groups.
+2. Open the log group for your Lambda function.
+3. Verify the log message: “object has been uploaded.”
+Step 5: Verify the Uploaded Object in S3
+1. Go to your S3 bucket.
+2. Check that the object exists.
+3. Click on the object → Download → Open with Notepad to check the output.
+ 
+ 
+Q7steps 
+1. Create the Function:
+o Log in to AWS Management Console.
+o Open AWS Lambda and click “Create function.”
+o Choose “Author from scratch,” select the runtime (Python or Java), and assign an IAM role.
+2. Write Code:
+o For Python: Write your handler function (e.g., lambda_handler(event, context):) directly in the console editor.
+o For Java: Upload a .jar package containing your handler class implementing the AWS Lambda interface.
+3. Configure Triggers:
+o Add an event source (S3, API Gateway, DynamoDB, etc.).
+4. Deploy and Test:
+o Save and deploy the function.
+o Test it using a sample event to verify output.
