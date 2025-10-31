@@ -138,6 +138,9 @@ Q8)Create AWS Lambda function to log “an object has been added” on adding th
 Q10)key pair-.ppk 1. connect to the created instance 2. display present working directory
 		EC2-Instance-name it-OS-ubunt-t2.micro-key pair-.ppk-create-connect-connect-terminal-pwd
     		commands-
+       
+
+11b) docker 
         sudo apt update -y
         sudo apt upgrade -y
         sudo apt install docker.io -y
